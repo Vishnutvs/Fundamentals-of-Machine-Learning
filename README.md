@@ -1,1 +1,1 @@
-# Fundamentals-of-Machine-Learning
+# fundamental-of-machine-learning
