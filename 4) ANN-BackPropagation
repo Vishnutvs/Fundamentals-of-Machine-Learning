@@ -1,0 +1,50 @@
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        self.weights_input_hidden = np.random.uniform(size=(input_size, hidden_size))
+        self.weights_hidden_output = np.random.uniform(size=(hidden_size, output_size))
+        self.bias_input_hidden = np.random.uniform(size=(1, hidden_size))
+        self.bias_hidden_output = np.random.uniform(size=(1, output_size))
+
+    def forward(self, X):
+        self.hidden_output = sigmoid(np.dot(X, self.weights_input_hidden) + self.bias_input_hidden)
+        return sigmoid(np.dot(self.hidden_output, self.weights_hidden_output) + self.bias_hidden_output)
+
+    def backward(self, X, y, output, learning_rate):
+        error = y - output
+        output_delta = error * sigmoid_derivative(output)
+        hidden_error = output_delta.dot(self.weights_hidden_output.T)
+        hidden_delta = hidden_error * sigmoid_derivative(self.hidden_output)
+
+        self.weights_hidden_output += self.hidden_output.T.dot(output_delta) * learning_rate
+        self.bias_hidden_output += np.sum(output_delta, axis=0, keepdims=True) * learning_rate
+        self.weights_input_hidden += X.T.dot(hidden_delta) * learning_rate
+        self.bias_input_hidden += np.sum(hidden_delta, axis=0, keepdims=True) * learning_rate
+
+    def train(self, X, y, epochs, learning_rate):
+        for epoch in range(epochs):
+            output = self.forward(X)
+            self.backward(X, y, output, learning_rate)
+            if epoch % 1000 == 0:
+                print(f"Epoch {epoch}: Error {np.mean(np.square(y - output))}")
+
+# Load Iris dataset
+X, y = load_iris(return_X_y=True)
+y = OneHotEncoder().fit_transform(y.reshape(-1, 1)).toarray()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train /= np.max(X_train)
+X_test /= np.max(X_test)
+
+# Train the neural network
+nn = NeuralNetwork(X_train.shape[1], 5, y_train.shape[1])
+nn.train(X_train, y_train, epochs=10000, learning_rate=0.1)
