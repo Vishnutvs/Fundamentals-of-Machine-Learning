@@ -1,0 +1,22 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+
+data = {
+    'age': [25, 30, 35, 20, 40],
+    'income': ['low', 'medium', 'high', 'low', 'high'],
+    'employment': ['part-time', 'full-time', 'full-time', 'unemployed', 'self-employed'],
+    'loan_approved': ['yes', 'yes', 'yes', 'no', 'no']
+}
+loan_data = pd.DataFrame(data)
+loan_data = pd.get_dummies(loan_data, columns=['income', 'employment'], drop_first=True)
+X = loan_data.drop('loan_approved', axis=1)
+y = loan_data['loan_approved']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = GaussianNB()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
