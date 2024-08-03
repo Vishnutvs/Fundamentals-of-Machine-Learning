@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+from collections import Counter
+
+def entropy(target_column):
+    _, counts = np.unique(target_column, return_counts=True)
+    probabilities = counts / counts.sum()
+    return -sum(probabilities * np.log2(probabilities))
+
+def information_gain(data, feature_column, target_column):
+    unique_values, counts = np.unique(data[feature_column], return_counts=True)
+    weighted_entropy = sum((counts[i] / sum(counts)) * entropy(data.where(data[feature_column] == value).dropna()[target_column]) for i, value in enumerate(unique_values))
+    return entropy(data[target_column]) - weighted_entropy
+
+def id3(data, features, target_attribute_name):
+    if len(np.unique(data[target_attribute_name])) <= 1:
+        return np.unique(data[target_attribute_name])[0]
+    if len(features) == 0:
+        return Counter(data[target_attribute_name]).most_common(1)[0][0]
+
+    feature_values = [information_gain(data, feature, target_attribute_name) for feature in features]
+    best_feature_index = np.argmax(feature_values)
+    best_feature = features[best_feature_index]
+    tree = {best_feature: {}}
+    features = [i for i in features if i != best_feature]
+    for value in np.unique(data[best_feature]):
+        value = value
+        sub_data = data.where(data[best_feature] == value).dropna()
+        subtree = id3(sub_data, features, target_attribute_name)
+        tree[best_feature][value] = subtree
+    return tree
+
+# Load your dataset
+data = pd.read_csv('lab3.csv')
+
+# Specify the target attribute name
+target_attribute_name = 'PlayTennis'
+
+# Extract feature columns
+features = [col for col in data.columns if col != target_attribute_name]
+
+# Build the ID3 tree
+id3_tree = id3(data, features, target_attribute_name)
+
+# Print the ID3 tree
+print(id3_tree)
